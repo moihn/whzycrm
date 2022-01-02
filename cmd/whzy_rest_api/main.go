@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -52,8 +51,8 @@ func logInit(logLevelName string) {
 }
 
 type Config struct {
-	DbConnectString *string `yaml:"database_connect_string"`
-	ListenPort      *int    `yaml:"listen_port"`
+	DbConnectString *string `yaml:"DbConnectString"`
+	ListenPort      *int    `yaml:"ListenPort"`
 }
 
 func main() {
@@ -73,7 +72,7 @@ func main() {
 	flag.Parse()
 
 	if len(configFile) > 0 {
-		configString, err := ioutil.ReadFile(configFile)
+		configString, err := os.ReadFile(configFile)
 		if err != nil {
 			logrus.Fatalf("failed to read file %v: %v", configFile, err)
 		}

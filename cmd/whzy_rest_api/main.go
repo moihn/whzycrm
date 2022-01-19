@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"net"
 	"net/http"
@@ -157,15 +158,27 @@ func main() {
 		Handler: oapiRouter,
 	}
 
+	ticker := time.NewTicker(time.Hour)
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGUSR1)
 
 	go func() {
-		oscall := <-c
-		logrus.Infof("system call:%+v", oscall)
-		if err := s.Shutdown(context.Background()); err != nil {
-			// Error from closing listeners, or context timeout:
-			logrus.Fatalf("HTTP server Shutdown: %v", err)
+		for {
+			select {
+			case oscall := <-c:
+				logrus.Infof("system call:%+v", oscall)
+				ticker.Stop()
+				if err := s.Shutdown(context.Background()); err != nil {
+					// Error from closing listeners, or context timeout:
+					logrus.Fatalf("HTTP server Shutdown: %v", err)
+				}
+			case t := <-ticker.C:
+				logrus.Infof("Ping database at %v", t)
+				if err := db.Ping(); err != nil {
+					logrus.Fatal(err)
+				}
+			}
 		}
 	}()
 

@@ -18,4 +18,5 @@ RUN yum install -y oracle-release-el7 sudo \
     && chmod 0440 /etc/sudoers.d/user
 ADD cmd/whzy_rest_api/whzy_rest_api /usr/local/bin/
 ADD config.yml /usr/local/etc/
+EXPOSE 1951
 ENTRYPOINT ["whzy_rest_api", "-config", "/usr/local/etc/config.yml"]

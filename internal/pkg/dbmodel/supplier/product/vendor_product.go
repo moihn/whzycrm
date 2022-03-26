@@ -3,9 +3,11 @@ package product
 import (
 	"database/sql"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/moihn/whzycrmgo/internal/pkg/dbmodel/common"
+	"github.com/moihn/whzycrmgo/internal/pkg/dbmodel/dbobject"
 	"github.com/moihn/whzycrmgo/internal/pkg/dbmodel/table"
 	"github.com/moihn/whzycrmgo/internal/pkg/util"
 )
@@ -28,6 +30,13 @@ type VendorNewProduct struct {
 	Moq            *int
 }
 
+type VendorProductSummary struct {
+	VendorId        int
+	Reference       string
+	VendorProductId int
+	Description     string
+}
+
 type VendorProduct struct {
 	VendorId        int
 	Reference       string
@@ -42,69 +51,55 @@ type VendorProduct struct {
 
 func getBasicVendorProductInfoById(tx *sql.Tx, vendorProductId int) (*VendorProduct, *util.Status) {
 	// search for vendor_product
-	sqlQuery := `
-		select VENDOR_ID, REFERENCE, DESCRIPTION, MATERIAL_TYPE_ID, LENGTH, WIDTH, HEIGHT, WEIGHT
-		from VENDOR_PRODUCT
-		where VENDOR_PRODUCT_ID = :vendorProductId
-	`
-	rows, err := tx.Query(sqlQuery, sql.Named("vendorProductId", vendorProductId))
+	row, err := dbobject.VendorProductGetByVendorProductId(tx, int64(vendorProductId))
 	if err != nil {
-		status := util.NewInternalServiceErrorStatus(fmt.Sprintf("Failed to run query %v: %v", sqlQuery, err), "GET_BASIC_VENDOR_PRODUCT_BY_ID_0")
+		status := util.NewInternalServiceErrorStatus(fmt.Sprintf("Failed to get vendor product with ID %v: %v", vendorProductId, err), "GET_BASIC_VENDOR_PRODUCT_BY_ID_0")
 		return nil, &status
 	}
-	defer rows.Close()
 
-	var vendorId int
-	var vendorProductReference, description string
-	var materialTypeId sql.NullInt64
-	var length, width, height, weight sql.NullFloat64
-	if rows.Next() {
-		err := rows.Scan(&vendorId, &vendorProductReference, &description, &materialTypeId, &length, &width, &height, &weight)
-		if err != nil {
-			status := util.NewInternalServiceErrorStatus(fmt.Sprintf("failed to read result of query [%v]: %v", sqlQuery, err), "GET_BASIC_VENDOR_PRODUCT_BY_ID_1")
-			return nil, &status
-		}
-	} else {
-		status := util.NewNotFoundStatus(fmt.Sprintf("product %v from Vendor %v is not found", vendorProductReference, vendorId))
+	if row == nil {
+		status := util.NewNotFoundStatus(fmt.Sprintf("vendor product with ID %v is not found", vendorProductId))
 		return nil, &status
 	}
 
 	vendorProduct := &VendorProduct{
-		VendorId:        vendorId,
-		VendorProductId: vendorProductId,
-		Reference:       vendorProductReference,
-		Description:     description,
+		VendorId:        int(row.VendorId),
+		VendorProductId: int(row.VendorProductId),
+		Reference:       row.Reference,
+	}
+	if row.Description != nil {
+		vendorProduct.Description = *row.Description
 	}
 
 	// try to get material information
-	if materialTypeId.Valid {
-		id := int(materialTypeId.Int64)
+	if row.MaterialTypeId != nil {
+		id := int(*row.MaterialTypeId)
 		vendorProduct.MaterialTypeId = &id
 	}
 
-	if length.Valid {
+	if row.Length != nil {
 		vendorProduct.UnitSize.Length = &common.Measure{
-			Value: float32(length.Float64),
+			Value: *row.Length,
 			Unit:  "CM",
 		}
 	}
-	if width.Valid {
+	if row.Width != nil {
 		vendorProduct.UnitSize.Width = &common.Measure{
-			Value: float32(width.Float64),
+			Value: *row.Width,
 			Unit:  "CM",
 		}
 	}
 
-	if height.Valid {
+	if row.Height != nil {
 		vendorProduct.UnitSize.Height = &common.Measure{
-			Value: float32(height.Float64),
+			Value: *row.Height,
 			Unit:  "CM",
 		}
 	}
 
-	if weight.Valid {
+	if row.Weight != nil {
 		vendorProduct.UnitSize.GrossWeight = &common.Measure{
-			Value: float32(weight.Float64),
+			Value: *row.Weight,
 			Unit:  "G",
 		}
 	}
@@ -291,6 +286,23 @@ func updateVendorProductMoq(
 // Public methods
 //
 
+func GetVendorProducts(tx *sql.Tx, vendorId int) ([]VendorProductSummary, error) {
+	rows, err := dbobject.VendorProductPopulateByVendorId(tx, int64(vendorId))
+	if err != nil {
+		return nil, err
+	}
+	result := []VendorProductSummary{}
+	for _, row := range rows {
+		result = append(result, VendorProductSummary{
+			VendorId:        int(row.VendorId),
+			Reference:       row.Reference,
+			VendorProductId: int(row.VendorProductId),
+			Description:     *row.Description,
+		})
+	}
+	return result, nil
+}
+
 func AddNewVendorProducts(tx *sql.Tx, newProducts []VendorNewProduct) ([]int, error) {
 	result := []int{}
 	for _, newProduct := range newProducts {
@@ -368,4 +380,34 @@ func GetVendorProductById(tx *sql.Tx, vendorProductId int) (*VendorProduct, *uti
 	}
 
 	return vp, nil
+}
+
+func UpdatePrice(tx *sql.Tx, vendorProductId int, priceValue float32, currencyId int, priceTypeId int) error {
+	prices, err := dbobject.VendorProductPricePopulateByVendorProductId(tx, int64(vendorProductId))
+	if err != nil {
+		return err
+	}
+	// sort prices by date desc
+	sort.Slice(prices[:], func(i, j int) bool {
+		return prices[i].StartDate.Before(prices[j].StartDate)
+	})
+
+	if len(prices) > 0 {
+		latestPrice := prices[0]
+		if latestPrice.CurrencyId == int64(currencyId) && latestPrice.Price == priceValue && latestPrice.PriceTypeId == int64(priceTypeId) {
+			return nil
+		}
+	}
+
+	year, month, day := time.Now().Date()
+
+	newRow := dbobject.VendorProductPriceRow{
+		VendorProductId: int64(vendorProductId),
+		StartDate:       time.Date(year, month, day, 0, 0, 0, 0, time.UTC),
+		Price:           priceValue,
+		CurrencyId:      int64(currencyId),
+		PriceTypeId:     int64(priceTypeId),
+	}
+
+	return newRow.Insert(tx)
 }

@@ -94,6 +94,63 @@ func (handler *serviceHandlerImpl) GetVendors(w http.ResponseWriter, r *http.Req
 	sendResponseWithBody(w, response, "GET_VENDORS_1")
 }
 
+func (handler *serviceHandlerImpl) GetVendorProducts(w http.ResponseWriter, r *http.Request, vendorId int) {
+	tx := handler.getDbTransaction(w)
+	if tx == nil {
+		return
+	}
+	// this is a read-only operation, roll back any potential change
+	defer tx.Rollback()
+	productSummaries, err := vendorProduct.GetVendorProducts(tx, vendorId)
+	if err != nil {
+		status := util.NewInternalServiceErrorStatus(err.Error(), "GET_VENDOR_PRODUCTS_0")
+		sendResponse(w, &status)
+		return
+	}
+	response := GetVendorProductsResponse{}
+	for _, summary := range productSummaries {
+		response.VendorProducts = append(response.VendorProducts, VendorProductSummary{
+			VendorProductId: summary.VendorProductId,
+			Reference:       summary.Reference,
+			Description:     summary.Description,
+			VendorId:        summary.VendorId,
+		})
+	}
+
+	sendResponseWithBody(w, response, "GET_VENDOR_PRODUCTS_1")
+}
+
+func (handler *serviceHandlerImpl) UpdateVendorPrice(w http.ResponseWriter, r *http.Request) {
+	var newPriceUpdateBody UpdateVendorPriceJSONRequestBody
+	status := util.DecodeJsonBodyAsObject(w, r, handler.bodySizeLimit, &newPriceUpdateBody)
+	if status != nil {
+		sendResponse(w, status)
+		return
+	}
+
+	tx := handler.getDbTransaction(w)
+	if tx == nil {
+		return
+	}
+	// this is a read-only operation, roll back any potential change
+	defer tx.Rollback()
+	err := vendorProduct.UpdatePrice(
+		tx, newPriceUpdateBody.VendorProductId,
+		newPriceUpdateBody.PriceUpdate.Price.Value,
+		newPriceUpdateBody.PriceUpdate.Price.CurrencyId,
+		newPriceUpdateBody.PriceUpdate.Price.PriceTypeId)
+
+	if err != nil {
+		status := util.NewBadRequestStatus(fmt.Sprintf("failed to update vendor product price: vendorProductId=%v, price=%v", newPriceUpdateBody.VendorProductId, newPriceUpdateBody.PriceUpdate.Price.Value))
+		sendResponse(w, &status)
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		status := util.NewInternalServiceErrorStatus(fmt.Sprintf("Failed to commit vendor price update: %v", err), "UPDATE_VENDOR_PRICE_0")
+		sendResponse(w, &status)
+	}
+}
+
 func (handler *serviceHandlerImpl) GetVendorProduct(w http.ResponseWriter, r *http.Request, vendorId int, vendorProductReference string) {
 	tx := handler.getDbTransaction(w)
 	if tx == nil {

@@ -33,6 +33,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+  /vendor-products/{vendor_id}:
+    get:
+      tags:
+        - whzycrm
+      summary: Get list of vendor products
+      description: This will return a list of vendor product
+      operationId: getVendorProducts
+      parameters:
+      - name: vendor_id
+        in: path
+        description: Vendor Id
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetVendorProductsResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
   /vendor-product/{vendor_id}/{vendor_product_reference}:
     get:
       tags:
@@ -98,6 +137,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AddVendorProductResponse'
+  /vendor-price:
+    post:
+      tags:
+        - whzycrm
+      summary: Update vendor product price
+      description: Add new price to vendor product.
+      operationId: updateVendorPrice
+      requestBody:
+        x-codegen-request-body-name: prices
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorProductPriceUpdate'
+      responses:
+          200:
+            description: OK
   /clients:
     get:
       tags:
@@ -350,7 +405,6 @@ components:
         - currencyId
         - value
         - priceTypeId
-        - startDate
     Measure:
       type: object
       properties:
@@ -494,6 +548,32 @@ components:
       required:
         - startDate
         - price
+    VendorProductPriceUpdate:
+      type: object
+      properties:
+        vendorProductId:
+          type: integer
+        priceUpdate:
+          $ref: '#/components/schemas/PriceChange'
+      required:
+        - vendorProductId
+        - priceUpdate
+    VendorProductSummary:
+      type: object
+      properties:
+        vendorId:
+          type: integer
+        vendorProductId:
+          type: integer
+        reference:
+          type: string
+        description:
+          type: string
+      required:
+      - vendorId
+      - vendorProductId
+      - reference
+      - description
     VendorProduct:
       type: object
       properties:
@@ -525,6 +605,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Vendor'
+    GetVendorProductsResponse:
+      type: object
+      properties:
+        vendorProducts:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorProductSummary'
+      required:
+      - vendorProducts
     GetVendorProductResponse:
       type: object
       properties:

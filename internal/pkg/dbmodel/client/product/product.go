@@ -28,9 +28,15 @@ func GetClientProductModels(tx *sql.Tx, clientId int, productRef string) ([]Clie
 				ClientProductId: int(clientProduct.ClientProductId),
 				ClientId:        int(clientProduct.ClientId),
 				Reference:       clientProduct.Reference,
-				Description:     clientProduct.Description,
-				Narrative:       clientProduct.Narrative,
-				Barcode:         clientProduct.Barcode,
+			}
+			if clientProduct.Description != nil {
+				clientProductModel.Description = *clientProduct.Description
+			}
+			if clientProduct.Narrative != nil {
+				clientProductModel.Narrative = *clientProduct.Narrative
+			}
+			if clientProduct.Barcode != nil {
+				clientProductModel.Barcode = *clientProduct.Barcode
 			}
 
 			clientProductItems, err := dbobject.ClientProductItemPopulateByClientProductId(tx, int64(clientProduct.ClientProductId))
@@ -57,9 +63,16 @@ func GetClientProductModelById(tx *sql.Tx, clientProductId int) (*ClientProductM
 			ClientProductId: int(clientProduct.ClientProductId),
 			ClientId:        int(clientProduct.ClientId),
 			Reference:       clientProduct.Reference,
-			Description:     clientProduct.Description,
-			Narrative:       clientProduct.Narrative,
-			Barcode:         clientProduct.Barcode,
+		}
+
+		if clientProduct.Description != nil {
+			clientProductModel.Description = *clientProduct.Description
+		}
+		if clientProduct.Narrative != nil {
+			clientProductModel.Narrative = *clientProduct.Narrative
+		}
+		if clientProduct.Barcode != nil {
+			clientProductModel.Barcode = *clientProduct.Barcode
 		}
 
 		clientProductItems, err := dbobject.ClientProductItemPopulateByClientProductId(tx, int64(clientProduct.ClientProductId))

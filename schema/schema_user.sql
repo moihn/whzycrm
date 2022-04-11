@@ -1,0 +1,13 @@
+-- create schema user
+create role RL_WHZY;
+GRANT SELECT ON TY_SPEC TO RL_WHZY;
+GRANT SELECT ON F_SPEC TO RL_WHZY;
+GRANT SELECT ON L_SPEC TO RL_WHZY;
+GRANT SELECT ON Z_SPEC TO RL_WHZY;
+
+create user :newUser IDENTIFIED by :newUserPass;
+GRANT CREATE TABLE TO :newUser;
+GRANT CREATE SEQUENCE TO :newUser;
+GRANT CREATE SESSION TO :newUser;
+GRANT RL_WHZY TO :newUser;
+ALTER USER :newUser quota unlimited on data;

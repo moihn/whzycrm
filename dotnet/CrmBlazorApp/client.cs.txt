@@ -1,0 +1,58 @@
+
+@using Microsoft.Extensions.Configuration
+@using CrmBlazorApp.Data
+@inject IConfiguration Configuration
+
+<h3>Client</h3>
+
+@if (getClientsError)
+{
+    <p> Unable to get client list</p>
+}
+else if (clientResponse == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    if (clientResponse.Clients == null)
+    {
+        <p>No client is found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>CountryId</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var client in clientResponse.Clients)
+                {
+                    <tr>
+                        <td>@client.Id</td>
+                        <td>@client.Name</td>
+                        <td>@client.CountryId</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+
+        protected CrmRestService? RestService { get; set; }
+        private bool getClientsError;
+        private CrmRestService.GetClientsResponse? clientResponse;
+
+        protected override async Task OnInitializedAsync()
+        {
+            base.OnInitialized();
+            RestService = new CrmRestService(Configuration);
+            clientResponse = await RestService.GetClientsAsync();
+        }
+}

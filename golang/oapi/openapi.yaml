@@ -1,0 +1,892 @@
+openapi: 3.0.1
+info:
+  title: WHZY CRM API
+  description: API for managing orders and product
+  version: 1.0.0
+paths:
+  /vendors:
+    get:
+      tags:
+      - whzycrm
+      summary: Get all available vendors
+      description: Get all available vendor information
+      operationId: getVendors
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GetVendorsResponse'
+                x-content-type: application/json
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /vendor-product:
+    put:
+      tags:
+        - whzycrm
+      summary: Add vendor product
+      description: Add vendor product. We can optionally add other product information like price and MOQ, etc...
+      operationId: addVendorProduct
+      requestBody:
+        x-codegen-request-body-name: product
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorNewProduct'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddVendorProductResponse'
+  /vendor-products/{vendor_id}:
+    get:
+      tags:
+        - whzycrm
+      summary: Get list of vendor products
+      description: This will return a list of vendor product
+      operationId: getVendorProducts
+      parameters:
+      - name: vendor_id
+        in: path
+        description: Vendor Id
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetVendorProductsResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /vendor-product/{vendor_id}/{vendor_product_reference}:
+    get:
+      tags:
+        - whzycrm
+      summary: Get all information about a vendor product
+      description: This will get product specification, history quotation and its information in orders
+      operationId: getVendorProduct
+      parameters:
+      - name: vendor_id
+        in: path
+        description: Vendor Id
+        required: true
+        schema:
+          type: integer
+      - name: vendor_product_reference
+        in: path
+        description: Vendor product reference
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetVendorProductResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /vendor-price:
+    put:
+      tags:
+        - whzycrm
+      summary: Add vendor product new price
+      description: Add new price to vendor product.
+      operationId: updateVendorPrice
+      requestBody:
+        x-codegen-request-body-name: prices
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorProductPriceUpdate'
+      responses:
+          200:
+            description: OK
+  /clients:
+    get:
+      tags:
+        - whzycrm
+      summary: Get client information
+      description: Get client information
+      operationId: getClients
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetClientsResponse'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /client-quotation:
+    post:
+      tags:
+        - whzycrm
+      summary: Add new quotation for a client
+      description: Create a new draft quotation for a client
+      operationId: createClientQuotation
+      requestBody:
+        x-codegen-request-body-name: quotation
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuotation'
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateClientQuotationResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    get:
+      tags:
+        - whzycrm
+      summary: Query for client quotations
+      description: Get a list of client quotations that meet the filter
+      operationId: getClientQuotations
+      parameters:
+        - name: clientId
+          in: query
+          description: Client ID
+          required: false
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          description: Start date for filtering on quotation creation date
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetClientQuotationsResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    patch:
+      tags:
+        - whzycrm
+      summary: Update client quotation
+      description: Update client quotation
+      operationId: updateClientQuotation
+      requestBody:
+        x-codegen-request-body-name: quotation
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/NewQuotation'
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateClientQuotationResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /client-product:
+    put:
+      tags:
+        - whzycrm
+      summary: Add new client product information
+      description: Add new client product. Client product must have a client product reference.
+      operationId: addClientProduct
+      requestBody:
+        x-codegen-request-body-name: client_product
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewClientProduct'
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddClientProductResponse'
+    get:
+      tags:
+        - whzycrm
+      summary: Get information about client product
+      description: Get information about client product
+      operationId: getClientProduct
+      parameters:
+        - name: client_id
+          in: query
+          description: Client ID
+          required: true
+          schema:
+            type: integer
+        - name: product_reference
+          in: query
+          description: Client product reference
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetClientProductResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /client-product/{client_product_id}:
+    put:
+      tags:
+        - whzycrm
+      summary: Add new client product item information
+      description: Add new client product item.
+      operationId: addClientProductItem
+      parameters:
+        - name: client_product_id
+          in: path
+          description: client Product Id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        x-codegen-request-body-name: client_product_item
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/NewClientProductItem'
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddClientProductResponse'
+    delete:
+      tags:
+        - whzycrm
+      summary: Delete client product
+      description: Mark client product as deleted
+      operationId: removeClientProduct
+      parameters:
+        - name: client_product_id
+          in: path
+          description: client Product Id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /client-product/{client_product_id}/{item_id}:
+    delete:
+      tags:
+        - whzycrm
+      summary: Add new client product item information
+      description: Add new client product item.
+      operationId: removeClientProductItem
+      parameters:
+        - name: client_product_id
+          in: path
+          description: Client Product Id
+          required: true
+          schema:
+            type: integer
+        - name: item_id
+          in: path
+          description: Client product item Id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /client-order:
+    put:
+      tags:
+        - whzycrm
+      summary: Add new client order
+      description: Add new client order from the uploaded specification
+      operationId: addClientOrder
+      requestBody:
+        x-codegen-request-body-name: order
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddClientOrderRequest'
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddClientOrderResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+components:
+  schemas:
+    ErrorMessage:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        reference:
+          type: string
+    Vendor:
+      type: object
+      required:
+        - vendorId
+        - name
+      properties:
+        vendorId:
+          type: integer
+        name:
+          type: string
+      example:
+        vendorId: 2
+        name: ABC factory
+    VendorProductRef:
+      type: object
+      properties:
+        vendorId:
+          type: integer
+        vendorProductRef:
+          type: string
+    Price:
+      type: object
+      properties:
+        currencyId:
+          type: integer
+        value:
+          type: number
+        priceTypeId:
+          type: integer
+      required:
+        - currencyId
+        - value
+        - priceTypeId
+    Measure:
+      type: object
+      properties:
+        value:
+          type: number
+        unit:
+          type: string
+      required:
+        - value
+        - unit
+    Packing:
+      type: object
+      properties:
+        length:
+          $ref: '#/components/schemas/Measure'
+        width:
+          $ref: '#/components/schemas/Measure'
+        height:
+          $ref: '#/components/schemas/Measure'
+        quantity:
+          type: integer
+        netWeight:
+          $ref: '#/components/schemas/Measure'
+        grossWeight:
+          $ref: '#/components/schemas/Measure'
+    ItemClientQuotationHistory:
+      type: object
+      properties:
+        quotationId:
+          type: integer
+        date:
+          type: string
+          format: date
+        price:
+          $ref: '#/components/schemas/Price'
+        moq:
+          type: integer
+        packing:
+          $ref: '#/components/schemas/Packing'
+    ItemInClientQuotation:
+      type: object
+      properties:
+        vendorProductId:
+          type: integer
+        price:
+          type: number
+        moq:
+          type: integer
+        packing:
+          $ref: '#/components/schemas/Packing'
+      required:
+        - vendorProductId
+        - price
+    ClientQuotation:
+      type: object
+      properties:
+        quotationId:
+          type: integer
+        clientId:
+          type: integer
+        updatedDate:
+          type: string
+          format: date
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemInClientQuotation'
+      required:
+        - quotationId
+        - clientId
+        - updatedDate
+        - items
+    NewQuotation:
+      type: object
+      properties:
+        clientId:
+          type: integer
+        vendorProductIds:
+          type: array
+          items:
+            type: integer
+      required:
+        - clientId
+        - vendorProductIds
+    ProductInOrder:
+      type: object
+      properties:
+        clientOrderIRef:
+          type: string
+        price:
+          $ref: '#/components/schemas/Price'
+        quantity:
+          type: integer
+        packing:
+          $ref: '#/components/schemas/Packing'
+    VendorNewProduct:
+      type: object
+      properties:
+        vendorId:
+          type: integer
+        productReference:
+          type: string
+        description:
+          type: string
+        productTypeId:
+          type: integer
+        materialTypeId:
+          type: integer
+        unitTypeId:
+          type: integer
+        price:
+          type: number
+        ccyId:
+          type: integer
+        priceTypeId:
+          type: integer
+        moq:
+          type: integer
+        testPerformed:
+          type: boolean
+        length:
+          type: number
+        width:
+          type: number
+        height:
+          type: number
+        weight:
+          type: number
+      required:
+        - vendorId
+        - productReference
+        - productTypeId
+    PriceChange:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        price:
+          $ref: '#/components/schemas/Price'
+      required:
+        - startDate
+        - price
+    VendorProductPriceUpdate:
+      type: object
+      properties:
+        vendorProductId:
+          type: integer
+        priceUpdate:
+          $ref: '#/components/schemas/PriceChange'
+      required:
+        - vendorProductId
+        - priceUpdate
+    VendorProductSummary:
+      type: object
+      properties:
+        vendorId:
+          type: integer
+        vendorProductId:
+          type: integer
+        reference:
+          type: string
+        description:
+          type: string
+      required:
+      - vendorId
+      - vendorProductId
+      - reference
+      - description
+    VendorProduct:
+      type: object
+      properties:
+        vendorId:
+          type: integer
+        vendorProductId:
+          type: integer
+        reference:
+          type: string
+        description:
+          type: string
+        materialTypeId:
+          type: integer
+        priceHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceChange'
+        packing:
+          $ref: '#/components/schemas/Packing'
+      required:
+        - vendorId
+        - reference
+        - priceHistory
+        - packing
+    GetVendorsResponse:
+      type: object
+      properties:
+        vendors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vendor'
+    GetVendorProductsResponse:
+      type: object
+      properties:
+        vendorProducts:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorProductSummary'
+      required:
+      - vendorProducts
+    GetVendorProductResponse:
+      type: object
+      properties:
+        vendorProduct:
+          $ref: '#/components/schemas/VendorProduct'
+        quotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemClientQuotationHistory'
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductInOrder'
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        countryId:
+          type: integer
+      required:
+        - id
+        - name
+        - countryId
+    NewClientProduct:
+      type: object
+      properties:
+        clientId:
+          type: integer
+        productReference:
+          type: string
+        description:
+          type: string
+        narrative:
+          type: string
+        barcode:
+          type: string
+      required:
+        - clientId
+        - productReference
+    NewClientProductItem:
+      type: object
+      properties:
+        vendorProductId:
+          type: integer
+        narrative:
+          type: string
+      required:
+        - vendorProductId
+    ClientProduct:
+      type: object
+      properties:
+        clientProductId:
+          type: integer
+        productReference:
+          type: string
+        description:
+          type: string
+        narrative:
+          type: string
+        barcode:
+          type: string
+        vendorProductIds:
+          type: array
+          items:
+            type: integer
+      required:
+        - clientProductId
+        - productReference
+        - vendorProductIds
+    GetClientsResponse:
+      type: object
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Client'
+      required:
+        - clients
+    GetClientProductResponse:
+      type: object
+      properties:
+        clientProducts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientProduct'
+      required:
+        - clientProducts
+    CreateClientQuotationResponse:
+      type: object
+      properties:
+        quotationId:
+          type: integer
+    UpdateClientQuotationResponse:
+      type: object
+      properties:
+        quotationId:
+          type: integer
+    GetClientQuotationsResponse:
+      type: object
+      properties:
+        quotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientQuotation'
+      required:
+        - products
+    AddVendorProductResponse:
+      type: object
+      properties:
+        productId:
+          type: integer
+      required:
+        - productId
+    ClientOrderItem:
+      type: object
+      properties:
+        clientOrderItemId:
+          type: integer
+        clientProductId:
+          type: integer
+        price:
+          $ref: '#/components/schemas/Price'
+        quantity:
+          type: integer
+        addedDate:
+          type: string
+          format: date
+        alternativeShipDate:
+          type: string
+          format: date
+        aternativePackDetail:
+          $ref: '#/components/schemas/Packing'
+      required:
+        - clientProductId
+        - price
+        - quantity
+        - addedDate
+    AddClientOrderRequest:
+      type: object
+      properties:
+        clientId:
+          type: integer
+        orderReference:
+          type: string
+        clientOrderReference: 
+          type: string
+        orderDate:
+          type: string
+          format: date
+        deliverDate:
+          type: string
+          format: date
+        clientProducts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientOrderItem'
+      required:
+        - clientId
+        - clientOrderRef
+        - clientProducts
+    AddClientOrderResponse:
+      type: object
+      properties:
+        clientOrderId:
+          type: integer
+      required:
+        - clientOrderId
+    AddClientProductResponse:
+      type: object
+      properties:
+        clientProductId:
+          type: integer
+      required:
+        - clientProductId

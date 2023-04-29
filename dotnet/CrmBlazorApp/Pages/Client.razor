@@ -1,0 +1,58 @@
+﻿@page "/client"
+
+@using CrmBlazorApp.Data
+@using System.Collections.Generic;
+@inject IConfiguration Configuration
+@inject CrmDataService DataService
+
+<h3>Client</h3>
+
+@if (getClientsError)
+{
+    <p> Unable to get client list</p>
+}
+else if (clients == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    if (clients.Count == 0)
+    {
+        <p>No client is found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>CountryId</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var client in clients)
+                {
+                    <tr>
+                        <td>@client.Id</td>
+                        <td>@client.Name</td>
+                        <td>@client.CountryId</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+
+    protected CrmDataService? CrmDataService { get; set; }
+    private bool getClientsError;
+    private List<Data.Client>? clients;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clients = await DataService.GetClientsAsync();
+    }
+}

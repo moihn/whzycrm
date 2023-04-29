@@ -1,0 +1,1 @@
+@dotnet ef dbcontext scaffold Name=ConnectionStrings:CrmRestApi Oracle.EntityFrameworkCore --schema WHZYQA --output-dir DbModels --force --no-build

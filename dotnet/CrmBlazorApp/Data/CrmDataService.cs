@@ -1,25 +1,29 @@
 ﻿using CrmBlazorApp.DbModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace CrmBlazorApp.Data
 {
     public class CrmDataService
     {
-        private readonly ModelContext _context;
+        private readonly IDbContextFactory<ModelContext> _dbContextFactory;
 
-        public CrmDataService(ModelContext context)
+        public CrmDataService(IDbContextFactory<ModelContext> factory)
         {
-            _context = context;
+            _dbContextFactory = factory;
         }
 
         public Task<Client[]> GetClientsAsync()
         {
-            var clients = _context.Clients.Select(dbClient => new Client
+            using (var dbContext = _dbContextFactory.CreateDbContext())
             {
-                Name = dbClient.Name,
-                Id = dbClient.ClientId,
-                CountryId = dbClient.CountryId
-            }).ToArray();
-            return Task.FromResult(clients);
+                var clients = dbContext.Clients.Select(dbClient => new Client
+                {
+                    Name = dbClient.Name,
+                    Id = dbClient.ClientId,
+                    CountryId = dbClient.CountryId
+                }).ToArray();
+                return Task.FromResult(clients);
+            }
         }
     }
 }

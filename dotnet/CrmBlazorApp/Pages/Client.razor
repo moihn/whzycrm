@@ -7,17 +7,13 @@
 
 <h3>Client</h3>
 
-@if (getClientsError)
-{
-    <p> Unable to get client list</p>
-}
-else if (clients == null)
+@if (clients == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
-    if (clients.Count == 0)
+    if (clients.Length == 0)
     {
         <p>No client is found.</p>
     }
@@ -47,9 +43,7 @@ else
 
 @code {
 
-    protected CrmDataService? CrmDataService { get; set; }
-    private bool getClientsError;
-    private List<Data.Client>? clients;
+    private Data.Client[]? clients;
 
     protected override async Task OnInitializedAsync()
     {

@@ -19,13 +19,13 @@ create table if not exists UNIT_TYPE
 create table if not exists MATERIAL_TYPE 
 (
     TYPE_ID serial PRIMARY KEY,
-    DESCRIPTION text
+    DESCRIPTION text UNIQUE
 );
 
 create table if not exists PRICE_TYPE 
 (
     PRICE_TYPE_ID serial PRIMARY KEY, 
-    NAME          text, 
+    NAME          text UNIQUE, 
     INVOICE_RATE  numeric NOT NULL
 );
 
@@ -39,7 +39,7 @@ create table if not exists CURRENCY
 create table if not exists COUNTRY
 (
     COUNTRY_ID serial PRIMARY KEY, 
-    NAME       text
+    NAME       text UNIQUE
 );
 
 create table if not exists EXCHANGE_RATE 
@@ -115,8 +115,9 @@ create table if not exists VENDOR_PRODUCT_PRICE
 create table if not exists CLIENT
 (
     CLIENT_ID  serial PRIMARY KEY, 
-    NAME       text, 
-    COUNTRY_ID integer
+    NAME       text NOT NULL,
+    COUNTRY_ID integer NOT NULL,
+		CONSTRAINT "U_CLIENT_NAME" UNIQUE(NAME)
 );
 
 create table if not exists CLIENT_QUOTATION

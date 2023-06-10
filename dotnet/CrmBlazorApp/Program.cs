@@ -10,7 +10,9 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 
-builder.Services.AddDbContext<CrmBlazorApp.DbModels.ModelContext>();
+builder.Services.AddDbContextFactory<CrmBlazorApp.DbModels.ModelContext>(options =>
+    options.UseNpgsql("Name=ConnectionStrings:CrmDb")
+);
 
 builder.Services.AddSingleton<CrmDataService>();
 

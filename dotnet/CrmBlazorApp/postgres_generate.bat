@@ -1,1 +1,1 @@
-dotnet ef dbcontext scaffold Name=ConnectionStrings:Postgres Npgsql.EntityFrameworkCore.PostgreSQL --output-dir DbModels --force --no-build --context ModelContext
+dotnet ef dbcontext scaffold Name=CrmDb Npgsql.EntityFrameworkCore.PostgreSQL --no-onconfiguring --output-dir DbModels --force --no-build --context ModelContext

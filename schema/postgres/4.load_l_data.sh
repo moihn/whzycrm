@@ -3,10 +3,11 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # run table creation as dba user
 DB_NAME=${DB_NAME:-appdb}
-TMP_SCHEMA=${TMP_SCHEMA:-appuser}
+TMP_SCHEMA=${TMP_SCHEMA:-tmp}
 PSQL_CMD=${PSQL_CMD:-docker compose exec -T db psql}
 
 ${PSQL_CMD} -U ${DB_NAME}_appuser -d ${DB_NAME} <<EOF
+drop table if exists ${TMP_SCHEMA}.lr_catalog;
 create table if not exists ${TMP_SCHEMA}.lr_catalog
 (
 Reference text,

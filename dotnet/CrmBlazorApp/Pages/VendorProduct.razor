@@ -1,0 +1,101 @@
+﻿@page "/vendor-product/{vendorProductId:int?}"
+
+<PageTitle>Vendor Product Detail</PageTitle>
+
+@using CrmBlazorApp.Data
+@inject CrmDataService DataService
+
+<h3>Vendor Product Detail</h3>
+
+@if (product == null)
+{
+    <p><em>Select vendor product...</em></p>
+    <input @bind-value="@productReferenceToSearch" @onkeydown="HandleKeyPress" />
+    <button @onclick="SearchVendorProductByReference">Search</button>
+    @if (@notFound)
+    {
+        <p class="alert-warning">Product @productReferenceToSearch is not found.</p>
+    }
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Vendor Product ID</th>
+                <th>Reference</th>
+                <th>Vendor Name</th>
+                <th>Description</th>
+                <th>Material Type</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@product.VendorProductId</td>
+                <td>@product.Reference</td>
+                <td>@product.Vendor.Name</td>
+                <td>@product.Description</td>
+                <td>@(product.MaterialType == null ? "" : product.MaterialType.Description)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Start Date</th>
+                <th>Price</th>
+                <th>Currency</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in product.VendorProductPrices.OrderByDescending(p => p.StartDate))
+            {
+                <tr>
+                    <td>@p.StartDate</td>
+                    <td>@p.Price</td>
+                    <td>@p.Currency.IsoSymbol</td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+
+@code {
+    private DbModels.VendorProduct? product;
+    private string? productReferenceToSearch;
+    private bool notFound = false;
+
+    [Parameter]
+    public int? VendorProductId { get; set; } = null;  // Default value is null for render a blank page
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (VendorProductId != null)
+        {
+            product = await DataService.GetVendorProductDetailAsync(VendorProductId.Value);
+        }
+    }
+
+    private async void SearchVendorProductByReference()
+    {
+        if (!string.IsNullOrWhiteSpace(productReferenceToSearch))
+        {
+            product = await DataService.GetVendorProductDetailByReferenceAsync(productReferenceToSearch);
+            if (product == null)
+            {
+                notFound = true;
+            }
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            SearchVendorProductByReference();
+        }
+    }
+}

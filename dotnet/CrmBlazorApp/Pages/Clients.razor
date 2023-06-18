@@ -1,11 +1,12 @@
-﻿@page "/client"
+﻿@page "/clients"
 
 @using CrmBlazorApp.Data
 @using System.Collections.Generic;
-@inject IConfiguration Configuration
 @inject CrmDataService DataService
 
-<h3>Client</h3>
+<PageTitle>Clients</PageTitle>
+
+<h3>Clients</h3>
 
 @if (clients == null)
 {
@@ -31,19 +32,19 @@ else
                 @foreach (var client in clients)
                 {
                     <tr>
-                        <td>@client.Id</td>
+                        <td>@client.ClientId</td>
                         <td>@client.Name</td>
-                        <td>@client.CountryId</td>
+                        <td>@client.Country.Name</td>
                     </tr>
                 }
             </tbody>
         </table>
+        <input type="button" />
     }
 }
 
 @code {
-
-    private Data.Client[]? clients;
+    private DbModels.Client[]? clients;
 
     protected override async Task OnInitializedAsync()
     {

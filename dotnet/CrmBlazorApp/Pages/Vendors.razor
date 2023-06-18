@@ -1,0 +1,58 @@
+﻿@page "/vendors"
+
+@using CrmBlazorApp.Data
+@inject CrmDataService DataService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Vendors</PageTitle>
+
+<h3>Vendors</h3>
+
+@if (vendors == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    if (vendors.Length == 0)
+    {
+        <p>No client is found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Products</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in vendors)
+                {
+                    <tr>
+                        <td>@v.Id</td>
+                        <td>@v.Name</td>
+                        <td><a href="/vendor-products/@v.Id">Products</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <input type="button" />
+    }
+}
+
+@code {
+    private DbModels.Vendor[]? vendors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        vendors = await DataService.GetVendorsAsync();
+    }
+
+    private void NavigateToVendorProduct(int vendorId)
+    {
+        NavigationManager.NavigateTo($"/vendor-products/{vendorId}");
+    }
+}

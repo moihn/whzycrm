@@ -1,0 +1,54 @@
+﻿@page "/vendor-products/{vendorId:int?}"
+
+<PageTitle>Vendor Products</PageTitle>
+
+@using CrmBlazorApp.Data
+@inject CrmDataService DataService
+
+<h3>Vendor Products</h3>
+
+@if (products == null)
+{
+    <p><em>Select vendor...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Vendor Product ID</th>
+                <th>Reference</th>
+                <th>Description</th>
+                <th>Material Type</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in products)
+            {
+                <tr>
+                    <td>@p.VendorProductId</td>
+                    <td>@p.Reference</td>
+                    <td>@p.Description</td>
+                    <td>@(p.MaterialType == null ? "" : p.MaterialType.Description)</td>
+                    <td><a href="/vendor-product/@p.VendorProductId">View</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private DbModels.VendorProduct[]? products;
+
+    [Parameter]
+    public int? VendorId { get; set; } = null;  // Default value is null for render a blank page
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (VendorId != null)
+        {
+            products = await DataService.GetProductsOfVendorAsync(VendorId.Value);
+        }
+    }
+}

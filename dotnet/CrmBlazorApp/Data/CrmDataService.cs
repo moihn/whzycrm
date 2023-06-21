@@ -66,5 +66,53 @@ namespace CrmBlazorApp.Data
             }
         }
 
+        public Task<DbModels.ClientProduct[]> GetProductsOfClientAsync(int clientId)
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                var products = dbContext.ClientProducts
+                    .Include(row => row.ClientProductItems)
+                        .ThenInclude(item => item.VendorProduct)
+                            .ThenInclude(vp => vp.VendorProductPrices)
+                    .Where(row => row.ClientId == clientId).ToArray();
+                return Task.FromResult(products);
+            }
+        }
+
+        public Task<DbModels.ClientOrder[]> GetOrdersOfClientAsync(int orderId)
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                var orders = dbContext.ClientOrders
+                    .Include(row => row.ClientOrderItems)
+                        .ThenInclude(item => item.ClientProduct)
+                            .ThenInclude(cp => cp.ClientProductItems)
+                                .ThenInclude(cpi => cpi.VendorProduct)
+                                    .ThenInclude(vp => vp.VendorProductPrices)
+                    .Include(row => row.ClientOrderItems)
+                        .ThenInclude(item => item.Currency)
+                    .Include(row => row.Status)
+                    .Where(row => row.ClientId == orderId).ToArray();
+                return Task.FromResult(orders);
+            }
+        }
+
+        public Task<DbModels.ClientOrder?> GetOrderOfClientByOrderIdAsync(int orderId)
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                var order = dbContext.ClientOrders
+                    .Include(row => row.ClientOrderItems)
+                        .ThenInclude(item => item.ClientProduct)
+                            .ThenInclude(cp => cp.ClientProductItems)
+                                .ThenInclude(cpi => cpi.VendorProduct)
+                                    .ThenInclude(vp => vp.VendorProductPrices)
+                    .Include(row => row.ClientOrderItems)
+                        .ThenInclude(item => item.Currency)
+                    .Include(row => row.Status)
+                    .SingleOrDefault(row => row.ClientId == orderId);
+                return Task.FromResult(order);
+            }
+        }
     }
 }

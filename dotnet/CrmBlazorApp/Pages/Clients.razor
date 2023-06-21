@@ -26,6 +26,8 @@ else
                     <th>Id</th>
                     <th>Name</th>
                     <th>CountryId</th>
+                    <th>Products</th>
+                    <th>Orders</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,6 +37,8 @@ else
                         <td>@client.ClientId</td>
                         <td>@client.Name</td>
                         <td>@client.Country.Name</td>
+                        <td><a href="/client-products/@client.ClientId">View</a></td>
+                        <td><a href="/client-orders/@client.ClientId">View</a></td>
                     </tr>
                 }
             </tbody>

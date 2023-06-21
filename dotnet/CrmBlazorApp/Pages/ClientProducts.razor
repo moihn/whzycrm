@@ -1,0 +1,61 @@
+﻿@page "/client-products/{clientId:int?}"
+
+<PageTitle>Client Products</PageTitle>
+
+@using CrmBlazorApp.Data
+@inject CrmDataService DataService
+
+<h3>Client Products</h3>
+
+@if (products == null)
+{
+    <p><em>Select client...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Client Product ID</th>
+                <th>Reference</th>
+                <th>Description</th>
+                <th>Vendor Product(s)</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in products)
+            {
+                <tr>
+                    <td>@p.ClientProductId</td>
+                    <td>@p.Reference</td>
+                    <td>@p.Description</td>
+                    <td>
+                        <ul>
+                            @foreach (var item in p.ClientProductItems)
+                            {
+                                <li><a href="/vendor-product/@item.VendorProductId">@item.VendorProduct.Reference</a></li>
+                            }
+                        </ul>
+                    </td>
+                    <td><a href="/client-product/@p.ClientProductId">Edit</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private DbModels.ClientProduct[]? products;
+
+    [Parameter]
+    public int? ClientId { get; set; } = null;  // Default value is null for render a blank page
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ClientId != null)
+        {
+            products = await DataService.GetProductsOfClientAsync(ClientId.Value);
+        }
+    }
+}

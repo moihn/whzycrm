@@ -1,0 +1,56 @@
+﻿@page "/client-orders/{clientId:int?}"
+
+<PageTitle>Client Orders</PageTitle>
+
+@using CrmBlazorApp.Data
+@inject CrmDataService DataService
+
+<h3>Client Orders</h3>
+
+@if (orders == null)
+{
+    <p><em>Select client...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Client Order ID</th>
+                <th>Reference</th>
+                <th>Order Date</th>
+                <th>Shipment Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in orders)
+            {
+                <tr>
+                    <td>@p.OrderId</td>
+                    <td>@p.OrderReference</td>
+                    <td>@p.CreationDate</td>
+                    <td>@p.ShipmentDate</td>
+                    <td>@p.Status.Description</td>
+                    <td><a href="/client-order/@p.OrderId">Edit</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private DbModels.ClientOrder[]? orders;
+
+    [Parameter]
+    public int? ClientId { get; set; } = null;  // Default value is null for render a blank page
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ClientId != null)
+        {
+            orders = await DataService.GetOrdersOfClientAsync(ClientId.Value);
+        }
+    }
+}

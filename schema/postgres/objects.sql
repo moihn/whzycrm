@@ -153,6 +153,12 @@ create table if not exists CLIENT_PRODUCT
     DESCRIPTION       text,
     NARRATIVE         text,
     BARCODE           text,
+	INNER_QTY         integer,
+	CARTON_LENGTH     integer,
+	CARTON_HEIGHT     integer,
+	CARTON_WIDTH      integer,
+	GROSS_WEIGHT      numeric,
+	NET_WEIGHT        numeric,
         CONSTRAINT "U_CLIENT_PRODUCT_1" UNIQUE (CLIENT_ID, REFERENCE), 
         CONSTRAINT "FK_CLIENT_PRODUCT_1" FOREIGN KEY (CLIENT_ID) REFERENCES CLIENT (CLIENT_ID)
 );

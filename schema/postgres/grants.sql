@@ -1,4 +1,4 @@
-grant select,insert,update on
+grant select,insert,update,delete on
   client,
   client_order,
   client_order_item,

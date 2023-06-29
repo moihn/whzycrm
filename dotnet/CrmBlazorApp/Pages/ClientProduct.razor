@@ -1,0 +1,64 @@
+﻿@page "/client-product/{clientProductId:int}"
+
+<PageTitle>Client Product</PageTitle>
+
+@using CrmBlazorApp.Data
+@inject CrmDataService DataService
+
+<h3>Client Product</h3>
+@if (ClientProductId != null && product == null)
+{
+    <p><em>Client product with ID @ClientProductId is not found</em></p>
+}
+else if (product == null)
+{
+    <p><em>Select client...</em></p>
+}
+else
+{
+    <EditForm Model="product" OnValidSubmit="Submit">
+        <DataAnnotationsValidator/>
+        <div class="form-group">
+            <label>Reference</label>
+            <InputText @bind-Value="product.Reference" class="form-control"></InputText>
+            <ValidationMessage For="()=>product.Reference" />
+            <label>Description</label>
+            <InputText @bind-Value="product.Description" class="form-control"></InputText>
+            <ValidationMessage For="()=>product.Description" />
+            <label>Item(s)</label>
+            @foreach(var item in product.ClientProductItems)
+            {
+                <table>
+                    <tbody>
+                        <tr><td><InputText @bind-Value="item.VendorProduct.Reference" class="form-control"></InputText></td></tr>
+                    </tbody>
+                </table>
+            }
+        </div>
+        <div>
+            <a class="btn btn-info form-control" href="/client-product/edit/@ClientProductId">Edit</a>
+        </div>
+    </EditForm>
+
+}
+
+@code {
+    private DbModels.ClientProduct? product;
+
+    [Parameter]
+    public int? ClientProductId { get; set; }  // Default value is null for render a blank page
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ClientProductId.HasValue)
+        {
+            product = await DataService.GetClientProductByIdAsync(ClientProductId.Value);
+        }
+    }
+
+
+    private void Submit()
+    {
+        
+    }
+}

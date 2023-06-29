@@ -66,6 +66,16 @@ namespace CrmBlazorApp.Data
             }
         }
 
+        public Task<DbModels.Client?> GetClientAsync(int clientId)
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                var client = dbContext.Clients
+                    .SingleOrDefault(row => row.ClientId == clientId);
+                return Task.FromResult(client);
+            }
+        }
+
         public Task<DbModels.ClientProduct[]> GetProductsOfClientAsync(int clientId)
         {
             using (var dbContext = _dbContextFactory.CreateDbContext())
@@ -76,6 +86,19 @@ namespace CrmBlazorApp.Data
                             .ThenInclude(vp => vp.VendorProductPrices)
                     .Where(row => row.ClientId == clientId).ToArray();
                 return Task.FromResult(products);
+            }
+        }
+
+        public Task<DbModels.ClientProduct?> GetClientProductByIdAsync(int clientProductId)
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                var product = dbContext.ClientProducts
+                    .Include(row => row.ClientProductItems)
+                        .ThenInclude(item => item.VendorProduct)
+                            .ThenInclude(vp => vp.VendorProductPrices)
+                    .SingleOrDefault(row => row.ClientProductId == clientProductId);
+                return Task.FromResult(product);
             }
         }
 
@@ -113,6 +136,70 @@ namespace CrmBlazorApp.Data
                     .SingleOrDefault(row => row.ClientId == orderId);
                 return Task.FromResult(order);
             }
+        }
+
+        public Task<DbModels.ClientProduct> SaveNewClientProductAsync(Data.NewClientProductDTO productDto, List<DbModels.VendorProduct> vps)
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                var product = new DbModels.ClientProduct()
+                {
+                    ClientId = productDto.ClientId,
+                    Reference = productDto.Reference,
+                    Description = productDto.Description,
+                    Barcode = productDto.Barcode
+                };
+                foreach (var vp in vps)
+                {
+                    var cpi = new DbModels.ClientProductItem()
+                    {
+                        VendorProduct = vp,
+                        ClientProduct = product
+                    };
+                    dbContext.VendorProducts.Attach(vp);
+                    dbContext.ClientProductItems.Add(cpi);
+                    product.ClientProductItems.Add(cpi);
+                }
+                
+                dbContext.ClientProducts.Add(product);
+                dbContext.SaveChanges();
+                return Task.FromResult(product);
+            }
+
+        }
+
+        public Task<DbModels.ClientProduct> SaveUpdatedClientProductAsync(DbModels.ClientProduct product, List<int> removedVendorProductIds, List<DbModels.VendorProduct> newVendorProducts)
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                dbContext.Attach(product);
+                foreach (var removedVendorProductId in removedVendorProductIds)
+                {
+                    var item = product.ClientProductItems.FirstOrDefault(item => item.VendorProductId == removedVendorProductId);
+                    if (item != null)
+                    {
+                        dbContext.ClientProductItems.Remove(item);
+                    }
+                }
+                foreach (var vp in newVendorProducts)
+                {
+                    var vp2 = dbContext.VendorProducts.SingleOrDefault(item => item.VendorProductId == vp.VendorProductId);
+                    if (vp2 != null && !product.ClientProductItems.Select(item => item.VendorProduct.Reference).Contains(vp2.Reference))
+                    {
+                        var cpi = new DbModels.ClientProductItem()
+                        {
+                            VendorProduct = vp2,
+                            ClientProduct = product
+                        };
+                        product.ClientProductItems.Add(cpi);
+                    }
+                }
+
+                dbContext.ClientProducts.Update(product);
+                dbContext.SaveChanges();
+                return Task.FromResult(product);
+            }
+
         }
     }
 }

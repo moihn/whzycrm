@@ -13,6 +13,7 @@ ${PSQL_CMD} -U ${DB_NAME}_appuser -d ${DB_NAME} <<EOF
 	values
 	('鸿鲲饰品'),
 	('天友玩具'),
-	('展希');
+	('展希'),
+	('泉州市鑫彩文化创意有限公司');
 	
 EOF

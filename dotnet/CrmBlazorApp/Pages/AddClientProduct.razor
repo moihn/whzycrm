@@ -1,0 +1,106 @@
+﻿@page "/client-product/add/{clientId:int}"
+
+<PageTitle>Add Client Product</PageTitle>
+
+@using CrmBlazorApp.Data
+@using System.Text;
+@using System.ComponentModel.DataAnnotations;
+@inject CrmDataService DataService
+@inject NavigationManager _nagivationManager
+
+<h3>Add Client Product</h3>
+
+<EditForm Model="productDto" OnValidSubmit="SubmitAsync">
+    <DataAnnotationsValidator/>
+    <div class="form-group">
+        <label>Client Product Reference</label>
+        <InputText @bind-Value="productDto.Reference" class="form-control" />
+        <ValidationMessage For="()=>productDto.Reference" />
+        <label>Description</label>
+        <InputText @bind-Value="productDto.Description" class="form-control" />
+        <ValidationMessage For="()=>productDto.Description" />
+        <label>Barcode</label>
+        <InputText @bind-Value="productDto.Barcode" class="form-control" />
+        <ValidationMessage For="()=>productDto.Barcode" />
+        <label>Inner PCS</label>
+        <InputNumber @bind-Value="productDto.InnerQty" class="form-control" />
+        <label>Carton Length</label>
+        <InputNumber @bind-Value="productDto.CartonLength" class="form-control" />
+        <label>Carton Height</label>
+        <InputNumber @bind-Value="productDto.CartonHeight" class="form-control" />
+        <label>Carton Width</label>
+        <InputNumber @bind-Value="productDto.CartonWidth" class="form-control" />
+        <label>Gross Weight</label>
+        <InputNumber @bind-Value="productDto.GrossWeight" class="form-control" />
+        <label>Net Weight</label>
+        <InputNumber @bind-Value="productDto.NetWeight" class="form-control" />
+        <label>Item(s)</label>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Vendor Product Reference</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in vendorProducts)
+            {
+                <tr>
+                    <td>@item.Reference</td>
+                    <td>@item.Description</td>
+                    <td>
+                        <button @onclick="() => RemoveVendorProduct(item)">Remove</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        <InputText @bind-Value="@newVendorProductReference" class="form-control" />
+        <button type="button" @onclick="AddVendorProductAsync">Add Vendor Product</button>
+    </div>
+    <div>
+        <button class="btn btn-primary" type="submit">Submit</button>
+    </div>
+</EditForm>
+
+
+@code {
+
+    private Data.NewClientProductDTO productDto = new();
+    private List<DbModels.VendorProduct> vendorProducts = new();
+
+    private string? newVendorProductReference;
+
+    [Parameter]
+    public int ClientId { get; set; }
+
+
+    private async void SubmitAsync()
+    {
+        productDto.ClientId = ClientId;
+        var newClientProduct = await DataService.SaveNewClientProductAsync(productDto, vendorProducts);
+        if (newClientProduct != null)
+        {
+            _nagivationManager.NavigateTo($"/client-products/{ClientId}");
+        }
+    }
+
+    private async void AddVendorProductAsync()
+    {
+        if (!string.IsNullOrEmpty(newVendorProductReference))
+        {
+            var vendorProduct = await DataService.GetVendorProductDetailByReferenceAsync(newVendorProductReference);
+            if (vendorProduct != null)
+            {
+                vendorProducts.Add(vendorProduct);
+                newVendorProductReference = null;
+            }
+        }
+    }
+
+    private void RemoveVendorProduct(DbModels.VendorProduct item)
+    {
+        vendorProducts.Remove(item);
+    }
+}

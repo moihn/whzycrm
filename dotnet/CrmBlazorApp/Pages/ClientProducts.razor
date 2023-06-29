@@ -6,13 +6,24 @@
 @inject CrmDataService DataService
 
 <h3>Client Products</h3>
-
-@if (products == null)
+@if (ClientId != null && client == null)
+{
+    <p><em>Client with ID @ClientId is not found</em></p>
+}
+else if (client == null || products == null)
 {
     <p><em>Select client...</em></p>
 }
 else
 {
+    <div class="d-flex justify-content-between">
+        <div class="flex-grow-1">
+            <p>@client.Name</p>
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-info form-control" href="/client-product/add/@ClientId">Add</a>
+        </div>
+    </div>
     <table class="table">
         <thead>
             <tr>
@@ -28,7 +39,7 @@ else
             {
                 <tr>
                     <td>@p.ClientProductId</td>
-                    <td>@p.Reference</td>
+                    <td><a href="/client-product/@p.ClientProductId">@p.Reference</a></td>
                     <td>@p.Description</td>
                     <td>
                         <ul>
@@ -38,15 +49,17 @@ else
                             }
                         </ul>
                     </td>
-                    <td><a href="/client-product/@p.ClientProductId">Edit</a></td>
+                    <td><a href="/client-product/edit/@p.ClientProductId">Edit</a></td>
                 </tr>
             }
         </tbody>
     </table>
+
 }
 
 @code {
     private DbModels.ClientProduct[]? products;
+    private DbModels.Client? client;
 
     [Parameter]
     public int? ClientId { get; set; } = null;  // Default value is null for render a blank page
@@ -55,7 +68,11 @@ else
     {
         if (ClientId != null)
         {
-            products = await DataService.GetProductsOfClientAsync(ClientId.Value);
+            client = await DataService.GetClientAsync(ClientId.Value);
+            if (client != null)
+            {
+                products = await DataService.GetProductsOfClientAsync(ClientId.Value);
+            }
         }
     }
 }

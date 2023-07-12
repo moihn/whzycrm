@@ -1,6 +1,7 @@
 using CrmBlazorApp.Data;
 using System.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +14,7 @@ builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddDbContextFactory<CrmBlazorApp.DbModels.ModelContext>(options =>
     options.UseNpgsql("Name=ConnectionStrings:CrmDb")
 );
-
+builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddSingleton<CrmDataService>();
 
 var app = builder.Build();

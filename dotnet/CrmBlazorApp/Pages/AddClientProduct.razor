@@ -90,11 +90,14 @@
     {
         if (!string.IsNullOrEmpty(newVendorProductReference))
         {
-            var vendorProduct = await DataService.GetVendorProductDetailByReferenceAsync(newVendorProductReference);
-            if (vendorProduct != null)
+            if (!vendorProducts.Any(p => p.Reference == newVendorProductReference))
             {
-                vendorProducts.Add(vendorProduct);
-                newVendorProductReference = null;
+                var vendorProduct = await DataService.GetVendorProductDetailByReferenceAsync(newVendorProductReference);
+                if (vendorProduct != null)
+                {
+                    vendorProducts.Add(vendorProduct);
+                    newVendorProductReference = null;
+                }
             }
         }
     }

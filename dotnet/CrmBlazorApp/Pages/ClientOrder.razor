@@ -1,4 +1,4 @@
-﻿@page "/client-order/{clientOrderId:int?}"
+﻿@page "/client-order/view/{ClientId:int}/{clientOrderReference}"
 
 <PageTitle>Client Order</PageTitle>
 
@@ -7,12 +7,29 @@
 
 <h3>Client Order</h3>
 
-@if (order == null)
-{
-    <p><em>Select client order...</em></p>
+@{
+    var order = orderInEffect;
+    if (order == null)
+    {
+        order = orderHistory.FirstOrDefault();
+    }
 }
-else
+
+@if (order != null)
 {
+    <div class="d-flex justify-content-between">
+        <div class="flex-grow-1">
+
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-info form-control" href="/client-order/edit/@ClientId/@ClientOrderReference">Edit</a>
+        </div>
+    </div>
+    <p>Client Reference: @order.ClientOrderReference</p>
+    <p>Our Reference: @order.OrderReference</p>
+    <p>Order Creation Date: @order.CreationDate.ToString("yyyy-MMM-dd")</p>
+    <p>Shipment Date: @order.ShipmentDate?.ToString("yyyy-MMM-dd")</p>
+    <p>Status: @(order.Status.Description) </p>
     <table class="table">
         <thead>
             <tr>
@@ -27,7 +44,7 @@ else
             @foreach (var p in order.ClientOrderItems)
             {
                 <tr>
-                    <td>@p.ClientProductId</td>
+                    <td>@p.ClientProduct.ClientProductId</td>
                     <td><a href="/client-product/@p.ClientProduct.ClientProductId">@p.ClientProduct.Reference</a></td>
                     <td>
                         <ul>
@@ -45,17 +62,56 @@ else
     </table>
 }
 
+<h4>Order History</h4>
+<table class="table">
+    <thead>
+        <tr>
+            <th>CreationDate</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var orderHist in orderHistory)
+        {
+            <tr>
+                <td>@orderHist.CreationDate.ToString("yyyy-MMM-dd")</td>
+                @if (orderHist.Status.StatusId == 0)
+                {
+                    <td>
+                        <a href="/client-order/edit/@ClientId/@orderHist.ClientOrderReference">Edit</a>
+                    </td>
+                }
+                else
+                {
+                    <td>
+                        <a href="/client-order/view-by-order-id/@orderHist.OrderId">View</a>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+
 @code {
-    private DbModels.ClientOrder? order;
+    private List<Data.EditClientOrder.ClientOrderDTO> orderHistory = null!;
+    private Data.EditClientOrder.ClientOrderDTO? orderInEffect;
 
     [Parameter]
-    public int? ClientOrderId { get; set; } = null;  // Default value is null for render a blank page
+    public int ClientId { get; set; }
+    [Parameter]
+    public string ClientOrderReference { get; set; } = null!;  // Default value is null for render a blank page
 
     protected override async Task OnInitializedAsync()
     {
-        if (ClientOrderId != null)
+        orderHistory = await DataService.GetClientOrderHistoryByReference(ClientId, ClientOrderReference);
+        foreach(var order in orderHistory)
         {
-            order = await DataService.GetOrderOfClientByOrderIdAsync(ClientOrderId.Value);
+            if (order.Status.StatusId >= 2)  // PI_SIGNED
+            {
+                orderInEffect = order;
+                return;
+            }
         }
     }
 }

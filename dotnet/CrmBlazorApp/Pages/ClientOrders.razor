@@ -7,16 +7,28 @@
 
 <h3>Client Orders</h3>
 
-@if (orders == null)
+@if (ClientId != null && orders == null)
+{
+    <p><em>Client with ID @ClientId is not found</em></p>
+}
+else if (client == null || orders == null)
 {
     <p><em>Select client...</em></p>
 }
 else
 {
+    <div class="d-flex justify-content-between">
+        <div class="flex-grow-1">
+            <p>@client.Name</p>
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-info form-control" href="/client-order/add/@ClientId">Add</a>
+        </div>
+    </div>
     <table class="table">
         <thead>
             <tr>
-                <th>Client Order ID</th>
+                <th>Client Order Reference</th>
                 <th>Reference</th>
                 <th>Order Date</th>
                 <th>Shipment Date</th>
@@ -28,12 +40,12 @@ else
             @foreach (var p in orders)
             {
                 <tr>
-                    <td>@p.OrderId</td>
+                    <td>@p.ClientOrderReference</td>
                     <td>@p.OrderReference</td>
                     <td>@p.CreationDate</td>
                     <td>@p.ShipmentDate</td>
                     <td>@p.Status.Description</td>
-                    <td><a href="/client-order/@p.OrderId">Edit</a></td>
+                    <td><a href="/client-order/view/@ClientId/@p.ClientOrderReference">View</a></td>
                 </tr>
             }
         </tbody>
@@ -42,6 +54,7 @@ else
 
 @code {
     private DbModels.ClientOrder[]? orders;
+    private Data.ClientDTO? client;
 
     [Parameter]
     public int? ClientId { get; set; } = null;  // Default value is null for render a blank page
@@ -50,7 +63,11 @@ else
     {
         if (ClientId != null)
         {
-            orders = await DataService.GetOrdersOfClientAsync(ClientId.Value);
+            client = await DataService.GetClientAsync(ClientId.Value);
+            if (client != null)
+            {
+                orders = await DataService.GetOrdersOfClientAsync(ClientId.Value);
+            }
         }
     }
 }

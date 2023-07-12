@@ -1,6 +1,6 @@
 ﻿@page "/client-product/edit/{clientProductId:int}"
 
-<PageTitle>Add Client Product</PageTitle>
+<PageTitle>Edit Client Product</PageTitle>
 
 @using CrmBlazorApp.Data
 @using System.Text;
@@ -8,7 +8,7 @@
 @inject CrmDataService DataService
 @inject NavigationManager _nagivationManager
 
-<h3>Add Client Product</h3>
+<h3>Edit Client Product</h3>
 
 <EditForm Model="product" OnValidSubmit="SubmitAsync">
     <DataAnnotationsValidator/>

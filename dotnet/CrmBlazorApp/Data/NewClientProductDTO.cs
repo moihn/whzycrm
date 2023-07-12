@@ -18,7 +18,7 @@ namespace CrmBlazorApp.Data
         public int? CartonLength { get; set; }
         public int? CartonHeight { get; set; }
         public int? CartonWidth { get; set; }
-        public float? GrossWeight { get; set; }
-        public float? NetWeight { get; set; }
+        public decimal? GrossWeight { get; set; }
+        public decimal? NetWeight { get; set; }
     }
 }

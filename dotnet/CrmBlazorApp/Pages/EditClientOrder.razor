@@ -1,0 +1,221 @@
+﻿@page "/client-order/edit/{clientOrderId:int}"
+
+<PageTitle>Edit Client Product</PageTitle>
+
+@using CrmBlazorApp.Data
+@using System.Text;
+@using System.ComponentModel.DataAnnotations;
+@using CrmBlazorApp.DbModels;
+    using CrmBlazorApp.Data.EditClientOrder;
+@inject CrmDataService DataService
+@inject NavigationManager _nagivationManager
+
+<h3>Edit Client Product</h3>
+
+@if (orderDto == null)
+{
+    <p><em>Select client order...</em></p>
+}
+else
+{
+<EditForm Model="orderDto" OnValidSubmit="SubmitAsync" >
+    <DataAnnotationsValidator />
+    <div class="form-group">
+        <label>Client Order Reference</label>
+        <InputText @bind-Value="orderDto.ClientOrderReference" class="form-control" />
+        <ValidationMessage For="()=>orderDto.ClientOrderReference" />
+        <label>Our Order Reference</label>
+        <InputText @bind-Value="orderDto.OrderReference" class="form-control" />
+        <ValidationMessage For="()=>orderDto.OrderReference" />
+        <label>Item(s)</label>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Client Product Reference</th>
+                    <th>Vendor Products</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Vendor Price(include tax)</th>
+                    <th>Fx Rate</th>
+                    <th>Subtotal</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in orderDto.ClientOrderItems)
+                {
+                    <tr>
+                        @{
+                            var clientProductItemCosts = item.ClientProduct?.ClientProductItems.Select(cpi => cpi.VendorProduct.VendorProductPrices.OrderByDescending(p => p.StartDate).FirstOrDefault());
+                            var clientProductCost = (clientProductItemCosts?.Select(cpic => cpic == null ? 0 : cpic.Price * (1 + cpic.PriceType.InvoiceRate)).Sum()).GetValueOrDefault(0);
+                        }
+                        <td>@item.ClientProduct?.Reference</td>
+                        <td>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Vendor Product Reference</th>
+                                        <th>Vendor Price</th>
+                                        <th>Price Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (item != null && item.ClientProduct != null)
+                                    {
+                                        @foreach (var vitem in item.ClientProduct.ClientProductItems)
+                                        {
+                                            <tr>
+                                                @{
+                                                    var vendorPrice = vitem.VendorProduct.VendorProductPrices.OrderByDescending(p => p.StartDate).FirstOrDefault();
+                                                }
+                                                <td><a href="/vendor-prtoduct/@vitem.VendorProductId">@vitem.VendorProduct.Reference</a></td>
+                                                <td>@vendorPrice?.Price</td>
+                                                <td>@vendorPrice?.PriceType?.Name</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                            <ul>
+                            </ul>
+                        </td>
+                        <td><InputNumber @bind-Value="item.Quantity" class="form-control" /></td>
+                        <td><InputNumber @bind-Value="item.Price" class="form-control" /></td>
+                        <td>@clientProductCost</td>
+                        <td>@(Math.Round((item.Price == 0 ? 0 : clientProductCost / item.Price), 2))</td>
+                        <td>@(item.Quantity * item.Price)</td>
+                        <td>
+                            <button type="button" @onclick="() => RemoveClientProduct(item)">Remove</button>
+                        </td>
+                    </tr>
+                }
+                <tr><td>Total: @orderDto.ClientOrderItems.Count item(s)</td><td></td><td>@orderDto.ClientOrderItems.Select(coi => coi.Quantity).Sum() PCS</td><td /><td /><td /><td>@orderDto.ClientOrderItems.Select(coi => coi.Price * coi.Quantity).Sum()</td><td /></tr>
+            </tbody>
+        </table>
+        <InputText @bind-Value="@newClientProductReference" class="form-control" />
+        <button type="button" @onclick="AddClientProductAsync">Add Client Product To Order</button>
+    </div>
+    <div>
+        <button class="btn btn-primary" type="submit">Submit</button>
+    </div>
+</EditForm>
+}
+
+@code {
+
+    private class ClientOrderItemComparer : IEqualityComparer<Data.EditClientOrder.ClientOrderItemDTO>, IComparer<Data.EditClientOrder.ClientOrderItemDTO>
+    {
+        public int Compare(Data.EditClientOrder.ClientOrderItemDTO? x, Data.EditClientOrder.ClientOrderItemDTO? y)
+        {
+            if (x?.ClientProduct.ClientProductId < y?.ClientProduct.ClientProductId)
+            {
+                return -1;
+            }
+            if (x?.ClientProduct.ClientProductId == y?.ClientProduct.ClientProductId)
+            {
+                return 0;
+            }
+            return 1;
+        }
+
+        public bool Equals(Data.EditClientOrder.ClientOrderItemDTO? x, Data.EditClientOrder.ClientOrderItemDTO? y)
+        {
+            return x?.ClientProduct.ClientProductId == y?.ClientProduct.ClientProductId;
+        }
+
+        public int GetHashCode(Data.EditClientOrder.ClientOrderItemDTO obj)
+        {
+            return obj.ClientProduct.ClientProductId;
+        }
+    }
+    private Data.EditClientOrder.ClientOrderDTO? orderDto;
+    // private List<DbModels.VendorProduct> newOrderItems = new();
+    private static ClientOrderItemComparer clientOrderItemComparer = new();
+    private SortedSet<Data.EditClientOrder.ClientOrderItemDTO> newOrderItems = new SortedSet<Data.EditClientOrder.ClientOrderItemDTO>(clientOrderItemComparer);
+    private HashSet<Data.EditClientOrder.ClientOrderItemDTO> removedClientOrderItems = new HashSet<Data.EditClientOrder.ClientOrderItemDTO>(clientOrderItemComparer);
+
+    private string? newClientProductReference;
+
+    [Parameter]
+    public int ClientOrderId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        orderDto = await DataService.GetOrderOfClientByOrderIdAsync(ClientOrderId);
+    }
+
+
+    private async void SubmitAsync()
+    {
+        if (orderDto != null)
+        {
+            var order = await DataService.SaveUpdatedClientOrderAsync(orderDto, newOrderItems, removedClientOrderItems);
+            if (order != null)
+            {
+                _nagivationManager.NavigateTo($"/client-order/{ClientOrderId}");
+            }
+        }
+    }
+
+    private List<Data.EditClientOrder.ClientOrderItemDTO> getClientOrderItemSnapshot()
+    {
+        List<Data.EditClientOrder.ClientOrderItemDTO> result = new();
+        if (orderDto != null)
+        {
+            foreach (var cio in orderDto.ClientOrderItems)
+            {
+                if (!removedClientOrderItems.Contains(cio))
+                {
+                    result.Add(cio);
+                }
+            }
+
+            foreach (var cio in newOrderItems)
+            {
+                result.Add(cio);
+            }
+        }
+
+        return result;
+    }
+
+    private async void AddClientProductAsync()
+    {
+        if (!string.IsNullOrEmpty(newClientProductReference) && orderDto != null)
+        {
+            // test if this is marked as deleted
+            if (removedClientOrderItems.RemoveWhere(cp => cp.ClientProduct.Reference == newClientProductReference) != 0)
+            {   // added back
+                return;
+            }
+            // check if it is already in the order
+            if (orderDto.ClientOrderItems.Any(coi => coi.ClientProduct.Reference == newClientProductReference))
+            {   // already in the order
+                return;
+            }
+            var clientProduct = await DataService.GetClientProductByReferenceAsync(newClientProductReference);
+            if (clientProduct != null)
+            {
+                var clientOrderItem = new Data.EditClientOrder.ClientOrderItemDTO();
+                clientOrderItem.ClientProduct = clientProduct;
+                newOrderItems.Add(clientOrderItem);
+                newClientProductReference = null;
+            }
+        }
+    }
+
+    private void RemoveClientProduct(Data.EditClientOrder.ClientOrderItemDTO item)
+    {
+        if (orderDto != null)
+        {
+            if (newOrderItems.RemoveWhere(coi => coi.ClientProduct.Reference == item.ClientProduct.Reference) != 0)
+            {   // removed from newly added
+                return;
+            }
+            if (orderDto.ClientOrderItems.Any(coi => coi.ClientProduct.Reference == item.ClientProduct.Reference))
+            {
+                removedClientOrderItems.Add(item);
+            }
+        }
+    }
+}
